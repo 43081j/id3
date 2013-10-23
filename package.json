@@ -1,0 +1,17 @@
+{
+	"name": "id3.js",
+	"version": "0.1",
+	"author": "43081j",
+	"description": "A modern ID3 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
+	"main": "./dist/id3.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/43081j/id3-js.git"
+	},
+	"keywords": [
+		"id3",
+		"mp3",
+		"parser"
+	],
+	"license": "MIT"
+}

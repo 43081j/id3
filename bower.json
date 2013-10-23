@@ -1,0 +1,5 @@
+{
+	"name": "id3-js",
+	"version": "0.1",
+	"main": "dist/id3.js",
+}
