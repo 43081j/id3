@@ -1,4 +1,4 @@
-id3.js - Javascript ID3 tag parser for Node & Browsers
+id3.js - Javascript ID3 tag parser
 ===
 
 **id3.js** is a JavaScript library for reading and parsing ID3 tags of MP3 files. **id3.js** can parse both ID3v1 and ID3v2 tags within a browser or Node environment. It also supports reading from local files (Node-only), same-origin URLs (AJAX) and File instances (HTML5 File API).
@@ -6,9 +6,13 @@ id3.js - Javascript ID3 tag parser for Node & Browsers
 Example - AJAX
 ===
 
+In your HTML:
+
 ```html
-<script src="id3.js"></script>
+<script src="id3.min.js"></script>
 ```
+
+In your JavaScript:
 
 ```javascript
 id3('/audio/track.mp3', function(err, tags) {
@@ -32,9 +36,13 @@ Note that here, the type is set to 'local' directly so that **id3.js** will atte
 Example - File API (HTML5)
 ===
 
+In your HTML:
+
 ```html
-<script src="id3.js"></script>
+<script src="id3.min.js"></script>
 ```
+
+In your JavaScript:
 
 ```javascript
 document.querySelector('input[type="file"]').onchange = function(e) {
@@ -75,6 +83,22 @@ Tags are passed as an object of the following format:
 The `artist`, `title`, `album` and `year` properties will always exist, though they will default to null. These particular fields are filled by both ID3v1 and ID3v2, the latter taking the priority.
 
 The `v2` object will contain a variable number of fields, depending on what is defined in the file, whereas the `v1` object will always have the same fields (some of which may be null).
+
+Images
+===
+
+On occasion, an MP3 may have an image embedded in the ID3v2 tag. If this is the case, it will be available through `v2.image`. This has a structure like so:
+
+```json
+{
+	"type": "cover-front",
+	"mime": "image/jpeg",
+	"description": null,
+	"data": ArrayBuffer
+}
+```
+
+As you can see, the data is provided as an `ArrayBuffer`. To access it, you may use a `DataView` or typed array such as `Uint8Array`.
 
 License
 ===

@@ -1,15 +1,5 @@
 /*
  * ID3 (v1/v2) Parser
- *
- * By AJAX:
- * 	id3('/test.mp3', function(err, tags) {});
- * By local path (node):
- * 	id3({ file: './test.mp3', type: 'local' }, function(err, tags) {});
- * By File API (browser):
- * 	document.querySelector('input[type="file"]').onchange = function(e) {
- * 		id3(this.files[0], function(err, tags) {});
- * 	}
- * typeof window == 'undefined'
  */
 
 (function() {
@@ -31,7 +21,7 @@
 		}
 
 		if(options.type === 'file') {
-			if(!window.File || !window.FileReader || !ArrayBuffer) {
+			if(typeof window === 'undefined' || !window.File || !window.FileReader || typeof ArrayBuffer === 'undefined') {
 				return cb('Browser does not have support for the File API and/or ArrayBuffers');
 			}
 		} else if(options.type === 'local') {
