@@ -1,5 +1,5 @@
 {
-	"name": "id3-js",
+	"name": "id3js",
 	"version": "1.0.0",
 	"author": "43081j",
 	"description": "A modern ID3 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
