@@ -6,7 +6,7 @@
 	"main": "./dist/id3.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/43081j/id3-js.git"
+		"url": "https://github.com/43081j/id3.git"
 	},
 	"keywords": [
 		"id3",
