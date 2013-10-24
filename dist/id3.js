@@ -343,7 +343,7 @@
 		 * Uint8 to String
 		 */
 
-		DataView.prototype.getString = function(length, offset) {
+		DataView.prototype.getString = function(length, offset, raw) {
 			offset = offset || 0;
 			length = length || (this.byteLength - offset);
 			if(length < 0) {
@@ -352,6 +352,9 @@
 			var str = '';
 			for(var i = offset; i < (offset + length); i++) {
 				str += String.fromCharCode(this.getUint8(i));
+			}
+			if(raw) {
+				return str;
 			}
 			return decodeURIComponent(escape(str));
 		};
@@ -754,13 +757,13 @@
 					v1: false,
 					v2: false
 				},
-				process = function() {
+				process = function(err) {
 					if(processed.v1 && processed.v2) {
 						tags.title = tags.v2.title || tags.v1.title;
 						tags.album = tags.v2.album || tags.v1.album;
 						tags.artist = tags.v2.artist || tags.v1.artist;
 						tags.year = tags.v1.year;
-						callback(null, tags);
+						callback(err, tags);
 					}
 				};
 			/*
@@ -768,10 +771,10 @@
 			 */
 			handle.read(128, handle.size - 128, function(err, buffer) {
 				if(err) {
-					return callback('Could not read file');
+					return process('Could not read file');
 				}
 				var dv = new DataView(buffer);
-				if(buffer.byteLength !== 128 || dv.getString(3) !== 'TAG') {
+				if(buffer.byteLength !== 128 || dv.getString(3, null, true) !== 'TAG') {
 					processed.v1 = true;
 					return process();
 				}
@@ -802,7 +805,7 @@
 			 */
 			handle.read(14, 0, function(err, buffer) {
 				if(err) {
-					return callback('Could not read file');
+					return process('Could not read file');
 				}
 				var dv = new DataView(buffer),
 					headerSize = 10,
@@ -812,7 +815,7 @@
 				 * Be sure that the buffer is at least the size of an id3v2 header
 				 * Assume incompatibility if a major version of > 4 is used
 				 */
-				if(buffer.byteLength !== 14 || dv.getString(3) !== 'ID3' || dv.getUint8(3) > 4) {
+				if(buffer.byteLength !== 14 || dv.getString(3, null, true) !== 'ID3' || dv.getUint8(3) > 4) {
 					processed.v2 = true;
 					return process();
 				}
