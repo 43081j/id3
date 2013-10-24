@@ -356,6 +356,34 @@
 			return decodeURIComponent(escape(str));
 		};
 
+		DataView.prototype.getStringUtf16 = function(length, offset, bom) {
+			offset = offset || 0;
+			length = length || (this.byteLength - offset);
+			var littleEndian = false,
+				str = '';
+			if(length < 0) {
+				length += this.byteLength;
+			}
+			if(bom) {
+				var bomInt = this.getUint16(offset);
+				if(bomInt === 0xFFFE) {
+					littleEndian = true;
+				}
+				offset += 2;
+				length -= 2;
+			}
+			for(var i = offset; i < (offset + length); i += 2) {
+				var ch = this.getUint16(i, littleEndian);
+				if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
+					str += String.fromCharCode(ch);
+				} else if(ch >= 0x10000 && ch <= 0x10FFFF) {
+					ch -= 0x10000;
+					str += String.fromCharCode(((0xFFC00 & ch) >> 10) + 0xD800) + String.fromCharCode((0x3FF & ch) + 0xDC00);
+				}
+			}
+			return decodeURIComponent(escape(str));
+		};
+
 		DataView.prototype.getSynch = function(num) {
 			var out = 0,
 				mask = 0x7f000000;
@@ -563,9 +591,9 @@
 				if(encoding === 0 || encoding === 3) {
 					result.value = dv.getString(-11, 11);
 				} else if(encoding === 1) {
-					result.value = dv.getString(-13, 13);
+					result.value = dv.getStringUtf16(-11, 11, true);
 				} else if(encoding === 2) {
-					result.value = dv.getString(-11, 11);
+					result.value = dv.getStringUtf16(-11, 11);
 				} else {
 					return false;
 				}
@@ -578,10 +606,33 @@
 				/*
 				 * TODO: Implement UTF-8, UTF-16 and UTF-16 with BOM properly?
 				 */
-				var encoding = dv.getUint8(10);
-				result.value = dv.getString(-14, 14);
-				if(result.value.indexOf('\x00') !== -1) {
-					result.value = result.value.substr(result.value.indexOf('\x00') + 1);
+				var encoding = dv.getUint8(10),
+					variableStart = 14, variableLength = 0;
+				/*
+				 * Skip the comment description and retrieve only the comment its self
+				 */
+				for(var i = variableStart;; i++) {
+					if(encoding === 1 || encoding === 2) {
+						if(dv.getUint16(i) === 0x0000) {
+							variableStart = i + 2;
+							break;
+						}
+						i++;
+					} else {
+						if(dv.getUint8(i) === 0x00) {
+							variableStart = i + 1;
+							break;
+						}
+					}
+				}
+				if(encoding === 0 || encoding === 3) {
+					result.value = dv.getString(-1 * variableStart, variableStart);
+				} else if(encoding === 1) {
+					result.value = dv.getStringUtf16(-1 * variableStart, variableStart, true);
+				} else if(encoding === 2) {
+					result.value = dv.getStringUtf16(-1 * variableStart, variableStart);
+				} else {
+					return false;
 				}
 			} else if(header.id === 'APIC') {
 				var encoding = dv.getUint8(10),
@@ -674,52 +725,50 @@
 		};
 
 		/*
-		 * Read the file
+		 * lib/id3tag.js
+		 * Parse an ID3 tag
 		 */
 
-		var handle = new Reader(options.type),
-			tags = {
-				title: null,
-				album: null,
-				artist: null,
-				year: null,
-				v1: {
-						title: null,
-						artist: null,
-						album: null,
-						year: null,
-						comment: null,
-						track: null,
-						version: 1.0
-					},
-				v2: {
-						version: [null, null]
-					}
-			},
-			processed = {
-				v1: false,
-				v2: false
-			},
-			process = function() {
-				if(processed.v1 && processed.v2) {
-					tags.title = tags.v2.title || tags.v1.title;
-					tags.album = tags.v2.album || tags.v1.album;
-					tags.artist = tags.v2.artist || tags.v1.artist;
-					tags.year = tags.v1.year;
-					cb(null, tags);
-				}
-			};
+		var ID3Tag = {};
 
-		handle.open(options.file, function(err) {
-			if(err) {
-				return cb('Could not open specified file');
-			}
+		ID3Tag.parse = function(handle, callback) {
+			var tags = {
+					title: null,
+					album: null,
+					artist: null,
+					year: null,
+					v1: {
+							title: null,
+							artist: null,
+							album: null,
+							year: null,
+							comment: null,
+							track: null,
+							version: 1.0
+						},
+					v2: {
+							version: [null, null]
+						}
+				},
+				processed = {
+					v1: false,
+					v2: false
+				},
+				process = function() {
+					if(processed.v1 && processed.v2) {
+						tags.title = tags.v2.title || tags.v1.title;
+						tags.album = tags.v2.album || tags.v1.album;
+						tags.artist = tags.v2.artist || tags.v1.artist;
+						tags.year = tags.v1.year;
+						callback(null, tags);
+					}
+				};
 			/*
 			 * Read the last 128 bytes (ID3v1)
 			 */
 			handle.read(128, handle.size - 128, function(err, buffer) {
 				if(err) {
-					return cb('Could not read file');
+					return callback('Could not read file');
 				}
 				var dv = new DataView(buffer);
 				if(buffer.byteLength !== 128 || dv.getString(3) !== 'TAG') {
@@ -753,7 +802,7 @@
 			 */
 			handle.read(14, 0, function(err, buffer) {
 				if(err) {
-					return cb('Could not read file');
+					return callback('Could not read file');
 				}
 				var dv = new DataView(buffer),
 					headerSize = 10,
@@ -826,6 +875,21 @@
 					processed.v2 = true;
 					process();
 				});
+			});
+		};
+
+		/*
+		 * Read the file
+		 */
+
+		var handle = new Reader(options.type);
+
+		handle.open(options.file, function(err) {
+			if(err) {
+				return cb('Could not open specified file');
+			}
+			ID3Tag.parse(handle, function(err, tags) {
+				cb(err, tags);
 			});
 		});
 	};

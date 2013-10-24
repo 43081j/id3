@@ -3,28 +3,33 @@ id3.js - Javascript ID3 tag parser
 
 **id3.js** is a JavaScript library for reading and parsing ID3 tags of MP3 files. **id3.js** can parse both ID3v1 and ID3v2 tags within a browser or Node environment. It also supports reading from local files (Node-only), same-origin URLs (AJAX) and File instances (HTML5 File API).
 
-Example - AJAX
+AJAX
 ===
-
-In your HTML:
 
 ```html
 <script src="id3.min.js"></script>
-```
-
-In your JavaScript:
-
-```javascript
+<script type="text/javascript">
 id3('/audio/track.mp3', function(err, tags) {
 	// tags now contains v1, v2 and merged tags
 });
+</script>
 ```
 
-Example - NodeJS
+Here the MP3 is being requested by partial AJAX requests, such that only the ID3v1 and ID3v2 tags are read rather than the file as a whole.
+
+Local Files
 ===
 
+First, install **id3.js** using NPM, the Node package manager.
+
+```
+npm install id3js
+```
+
+Then use it like so:
+
 ```javascript
-var id3 = require('./id3');
+var id3 = require('id3js');
 
 id3({ file: './track.mp3', type: 'local' }, function(err, tags) {
 	// tags now contains your ID3 tags
@@ -33,26 +38,25 @@ id3({ file: './track.mp3', type: 'local' }, function(err, tags) {
 
 Note that here, the type is set to 'local' directly so that **id3.js** will attempt to read from the local file-system using `fs`.
 
-Example - File API (HTML5)
-===
+This will **only work under NodeJS**.
 
-In your HTML:
+File API (HTML5)
+===
 
 ```html
 <script src="id3.min.js"></script>
-```
-
-In your JavaScript:
-
-```javascript
+<script type="text/javascript">
 document.querySelector('input[type="file"]').onchange = function(e) {
 	id3(this.files[0], function(err, tags) {
 		// tags now contains your ID3 tags
 	});
 }
+</script>
 ```
 
-Tags format
+This will read the data from the File instance using slices, so the entire file is not loaded into memory but rather only the tags.
+
+Format
 ===
 
 Tags are passed as an object of the following format:
