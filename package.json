@@ -1,17 +1,19 @@
 {
-  "name": "id3js",
-  "version": "1.0.2",
-  "author": "43081j",
-  "description": "A modern ID3 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
-  "main": "./dist/id3.js",
+  "name": "mp4js",
+  "version": "0.0.2",
+  "author": "lennart",
+  "description": "A modern MP4 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
+  "main": "./dist/mp4.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/43081j/id3.git"
+    "url": "https://github.com/lennart/mp4.git"
   },
   "keywords": [
-    "id3",
-    "mp3",
+    "mp4",
     "parser"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "uglify-js": "~2.4.1"
+  }
 }
