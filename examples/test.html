@@ -4,17 +4,17 @@
 		<title>Test</title>
 	</head>
 	<body>
-		<!-- Make a file input for you to select an MP3 -->
+		<!-- Make a file input for you to select an MP4 -->
 		<input type="file">
-		<!-- Include ID3.js -->
-		<script src="id3.min.js"></script>
+		<!-- Include MP$.js -->
+		<script src="mp4.min.js"></script>
 		<script type="text/javascript">
 			document.querySelector('input[type="file"]').onchange = function(e) {
 				/*
-				   Pass the File instance to ID3.js
+				   Pass the File instance to MP4.js
 				   You could iterate over this.files to handle many at once
 				*/
-				id3(this.files[0], function(err, tags) {
+				mp4(this.files[0], function(err, tags) {
 					console.log(err, tags);
 				});
 			}

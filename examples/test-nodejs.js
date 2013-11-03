@@ -1,6 +1,6 @@
-var id3 = require('id3js');
+var mp4 = require('mp4js');
 
-id3({ file:'./track.mp3', type: 'local' }, function(err, tags) {
+mp4({ file:'./track.m4a', type: 'local' }, function(err, tags) {
 	/*
 	 * 'local' type causes the file to be read from the local file-system
 	 */
