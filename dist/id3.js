@@ -15,13 +15,13 @@
 		this.file = null;
 	};
 
-	if(typeof require === 'function') {
-		var fs = require('fs');
-	}
-
 	Reader.OPEN_FILE = 1;
 	Reader.OPEN_URI = 2;
 	Reader.OPEN_LOCAL = 3;
+
+	if(typeof require === 'function') {
+		var fs = require('fs');
+	}
 
 	Reader.prototype.open = function(file, callback) {
 		this.file = file;
@@ -71,6 +71,10 @@
 	};
 
 	Reader.prototype.read = function(length, position, callback) {
+		if(typeof position === 'function') {
+			callback = position;
+			position = 0;
+		}
 		if(this.type === Reader.OPEN_LOCAL) {
 			this.readLocal(length, position, callback);
 		} else if(this.type === Reader.OPEN_FILE) {
@@ -78,6 +82,23 @@
 		} else {
 			this.readUri(length, position, callback);
 		}
+	};
+
+	Reader.prototype.readBlob = function(length, position, type, callback) {
+		if(typeof position === 'function') {
+			callback = position;
+			position = 0;
+		} else if(typeof type === 'function') {
+			callback = type;
+			type = 'application/octet-stream';
+		}
+		this.read(length, position, function(err, data) {
+			if(err) {
+				callback(err);
+				return;
+			}
+			callback(null, new Blob([data], {type: type}));
+		});
 	};
 
 	/*
@@ -167,10 +188,8 @@
 	};
 
 	/*
-	 * lib/dataview.js
-	 * Uint8 to String
+	 * lib/dataview-extra.js
 	 */
-
 	DataView.prototype.getString = function(length, offset, raw) {
 		offset = offset || 0;
 		length = length || (this.byteLength - offset);
@@ -178,20 +197,33 @@
 			length += this.byteLength;
 		}
 		var str = '';
-		for(var i = offset; i < (offset + length); i++) {
-			str += String.fromCharCode(this.getUint8(i));
+		if(typeof Buffer !== 'undefined') {
+			var data = [];
+			for(var i = offset; i < (offset + length); i++) {
+				data.push(this.getUint8(i));
+			}
+			return (new Buffer(data)).toString();
+		} else {
+			for(var i = offset; i < (offset + length); i++) {
+				str += String.fromCharCode(this.getUint8(i));
+			}
+			if(raw) {
+				return str;
+			}
+			return decodeURIComponent(escape(str));
 		}
-		if(raw) {
-			return str;
-		}
-		return decodeURIComponent(escape(str));
 	};
 
 	DataView.prototype.getStringUtf16 = function(length, offset, bom) {
 		offset = offset || 0;
 		length = length || (this.byteLength - offset);
 		var littleEndian = false,
-			str = '';
+			str = '',
+			useBuffer = false;
+		if(typeof Buffer !== 'undefined') {
+			str = [];
+			useBuffer = true;
+		}
 		if(length < 0) {
 			length += this.byteLength;
 		}
@@ -206,13 +238,26 @@
 		for(var i = offset; i < (offset + length); i += 2) {
 			var ch = this.getUint16(i, littleEndian);
 			if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
-				str += String.fromCharCode(ch);
+				if(useBuffer) {
+					str.push(ch);
+				} else {
+					str += String.fromCharCode(ch);
+				}
 			} else if(ch >= 0x10000 && ch <= 0x10FFFF) {
 				ch -= 0x10000;
-				str += String.fromCharCode(((0xFFC00 & ch) >> 10) + 0xD800) + String.fromCharCode((0x3FF & ch) + 0xDC00);
+				if(useBuffer) {
+					str.push(((0xFFC00 & ch) >> 10) + 0xD800);
+					str.push((0x3FF & ch) + 0xDC00);
+				} else {
+					str += String.fromCharCode(((0xFFC00 & ch) >> 10) + 0xD800) + String.fromCharCode((0x3FF & ch) + 0xDC00);
+				}
 			}
 		}
-		return decodeURIComponent(escape(str));
+		if(useBuffer) {
+			return buffer.toString();
+		} else {
+			return decodeURIComponent(escape(str));
+		}
 	};
 
 	DataView.prototype.getSynch = function(num) {
@@ -243,7 +288,6 @@
 		}
 		return this.getUint8(offset + 2) + (this.getUint8(offset + 1) << 8) + (this.getUint8(offset) << 16);
 	};
-
 
 	var id3 = function(opts, cb) {
 		/*
