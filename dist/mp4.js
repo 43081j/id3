@@ -373,7 +373,6 @@ MP4Tag.parse = function(handle, callback) {
             }
           })
         } else {
-          debugger;
           cb(null, {
             name: name,
             length: length,
@@ -472,7 +471,6 @@ MP4Tag.parse = function(handle, callback) {
 
           });
           // decorate M4A tags
-          debugger;
           tags.year = (new Date(Date.parse(tags.date)))
             .getUTCFullYear()
 
