@@ -31,7 +31,7 @@ Then use it like so:
 ```javascript
 var id3 = require('id3js');
 
-id3({ file: './track.mp3', type: 'local' }, function(err, tags) {
+id3({ file: './track.mp3', type: id3.OPEN_LOCAL }, function(err, tags) {
 	// tags now contains your ID3 tags
 });
 ```
