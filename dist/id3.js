@@ -15,6 +15,10 @@
 		this.file = null;
 	};
 
+	if(typeof require === 'function') {
+		var fs = require('fs');
+	}
+
 	Reader.OPEN_FILE = 1;
 	Reader.OPEN_URI = 2;
 	Reader.OPEN_LOCAL = 3;
@@ -269,7 +273,6 @@
 			if(typeof require !== 'function') {
 				return cb('Local paths may not be read within a browser');
 			}
-			var fs = require('fs');
 		} else {
 		}
 
