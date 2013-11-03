@@ -3,6 +3,9 @@ mp4.js - Javascript MP4 tag parser
 
 **mp4.js** is a JavaScript library for reading and parsing metatags of MP4 files (m4a,m4v,ALAC). **mp4.js** can parse metadata within a browser or Node environment. It also supports reading from local files (Node-only), same-origin URLs (AJAX) and File instances (HTML5 File API).
 
+Compatibility for AJAX/FileReaderAPI and nodejs is taken from [https://github.com/43081j/id3](43081j's ID3.js), 
+implementation details are based upon the magnificent [taglib](https://github.com/taglib/taglib), thanks for that!
+
 AJAX
 ===
 
