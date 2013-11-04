@@ -254,7 +254,7 @@
 			}
 		}
 		if(useBuffer) {
-			return buffer.toString();
+			return str.toString();
 		} else {
 			return decodeURIComponent(escape(str));
 		}
