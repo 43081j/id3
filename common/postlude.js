@@ -2,6 +2,19 @@
  * Read the file
  */
 
+  if (typeof options.type === 'string') {
+    switch(options.type) {
+      case 'file':
+        options.type = Reader.OPEN_FILE;
+        break;
+      case 'local': 
+        options.type = Reader.OPEN_LOCAL;
+        break;
+      default:
+        options.type = Reader.OPEN_URI
+    }
+  }
+
   var handle = new Reader(options.type);
 
   handle.open(options.file, function (err) {

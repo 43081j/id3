@@ -54,11 +54,6 @@ MP4Tag.parse = function(handle, callback) {
     return buffer;
   }
 
-  function readString(ab, length, offset) {
-    return ab2b(ab)
-      .toString('utf8', offset, length + offset);
-  }
-
   var containers = [
     "moov", "udta", "mdia", "meta", "ilst",
     "stbl", "minf", "moof", "traf", "trak",
@@ -93,13 +88,8 @@ MP4Tag.parse = function(handle, callback) {
     readUInt: function readUInt(view, length) {
       return view.getUint32(0, false);
     },
-    readText: function readText(view, length) {
-      if (typeof Buffer === 'function') {
-        return readString(view.buffer, length, 0);
-      }
-      else {
-        return view.getString(length);
-      }
+    readText: function readText(view, length, flags) {
+      return view.getString(length,0,true);
     },
     readInt: function readInt(view, length) {
       return view.getInt32(0, false);
@@ -160,6 +150,9 @@ MP4Tag.parse = function(handle, callback) {
     "titlesort": "sonm",
     "composersort": "soco",
     "showsort": "sosn",
+  };
+
+  var apple_atom_name_mappings = {
     "musicbrainz_trackid": "----:com.apple.iTunes:MusicBrainz Track Id",
     "musicbrainz_artistid": "----:com.apple.iTunes:MusicBrainz Artist Id",
     "musicbrainz_albumid": "----:com.apple.iTunes:MusicBrainz Album Id",
@@ -184,8 +177,7 @@ MP4Tag.parse = function(handle, callback) {
     "script": "----:com.apple.iTunes:SCRIPT",
     "language": "----:com.apple.iTunes:LANGUAGE",
     "license": "----:com.apple.iTunes:LICENSE",
-    "media": "----:com.apple.iTunes:MEDIA",
-
+    "media": "----:com.apple.iTunes:MEDIA"
   };
 
   function translateToAtomName(human) {
@@ -361,7 +353,12 @@ MP4Tag.parse = function(handle, callback) {
         }
         else {
           var dv = new DataView(buffer);
-          var name = dv.getString(4, 4);
+          
+          var id = [];
+          for(var i = 4; i < 8; i++) {
+            id.push(String.fromCharCode(dv.getUint8(i)));
+          }
+          var name = id.join("");
 
           var length = dv.getUint32(0, false);
           if (containers.indexOf(name) !== -1) {
@@ -484,10 +481,20 @@ MP4Tag.parse = function(handle, callback) {
 
           });
           // decorate M4A tags
-          tags.year = (new Date(Date.parse(tags.date)))
-            .getUTCFullYear()
+          if (tags.date) {
+            tags.year = (new Date(Date.parse(tags.date)))
+              .getUTCFullYear()
+          }
+          else {
+            tags.year = null;
+          }
 
-          tags.track = tags.tracknumber.join("/");
+          if (tags.tracknumber) {
+            tags.track = tags.tracknumber.join("/");
+          }
+          else {
+            tags.track = null;
+          }
           callback(null, tags);
         } else {
           callback(err);
@@ -499,8 +506,50 @@ MP4Tag.parse = function(handle, callback) {
     }
   });
 }/*
- * Add some helper methods to the DataView object
+ * dataview-extra.js
+ * 43081j
+ * License: MIT, see LICENSE
  */
+DataView.decodeUtf8 = function decodeUtf8(arrayBuffer) {
+  var result = "";
+  var i = 0;
+  var c = 0;
+  var c1 = 0;
+  var c2 = 0;
+
+  var data = new Uint8Array(arrayBuffer);
+
+  // If we have a BOM skip it
+  if (data.length >= 3 && data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf) {
+    i = 3;
+  }
+
+  while (i < data.length) {
+    c = data[i];
+
+    if (c < 128) {
+      result += String.fromCharCode(c);
+      i++;
+    } else if (c > 191 && c < 224) {
+      if (i + 1 >= data.length) {
+        throw "UTF-8 Decode failed. Two byte character was truncated.";
+      }
+      c2 = data[i + 1];
+      result += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+      i += 2;
+    } else {
+      if (i + 2 >= data.length) {
+        throw "UTF-8 Decode failed. Multi byte character was truncated.";
+      }
+      c2 = data[i + 1];
+      c3 = data[i + 2];
+      result += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+      i += 3;
+    }
+  }
+  return result;
+}
+
 
 DataView.prototype.getString = function(length, offset) {
 	offset = offset || 0;
@@ -508,18 +557,28 @@ DataView.prototype.getString = function(length, offset) {
 	if(length < 0) {
 		length += this.byteLength;
 	}
-	var str = '';
+	var data = [];
 	for(var i = offset; i < (offset + length); i++) {
-		str += String.fromCharCode(this.getUint8(i));
+		data.push(this.getUint8(i));
 	}
-	return str;
+
+	if(typeof Buffer !== 'undefined') {
+		return (new Buffer(data)).toString();
+	} else {
+		return DataView.decodeUtf8(data);
+	}
 };
 
 DataView.prototype.getStringUtf16 = function(length, offset, bom) {
 	offset = offset || 0;
 	length = length || (this.byteLength - offset);
 	var littleEndian = false,
-		str = '';
+		str = '',
+		useBuffer = false;
+	if(typeof Buffer !== 'undefined') {
+		str = [];
+		useBuffer = true;
+	}
 	if(length < 0) {
 		length += this.byteLength;
 	}
@@ -534,13 +593,26 @@ DataView.prototype.getStringUtf16 = function(length, offset, bom) {
 	for(var i = offset; i < (offset + length); i += 2) {
 		var ch = this.getUint16(i, littleEndian);
 		if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
-			str += String.fromCharCode(ch);
+			if(useBuffer) {
+				str.push(ch);
+			} else {
+				str += String.fromCharCode(ch);
+			}
 		} else if(ch >= 0x10000 && ch <= 0x10FFFF) {
 			ch -= 0x10000;
-			str += String.fromCharCode(((0xFFC00 & ch) >> 10) + 0xD800) + String.fromCharCode((0x3FF & ch) + 0xDC00);
+			if(useBuffer) {
+				str.push(((0xFFC00 & ch) >> 10) + 0xD800);
+				str.push((0x3FF & ch) + 0xDC00);
+			} else {
+				str += String.fromCharCode(((0xFFC00 & ch) >> 10) + 0xD800) + String.fromCharCode((0x3FF & ch) + 0xDC00);
+			}
 		}
 	}
-	return decodeURIComponent(escape(str));
+	if(useBuffer) {
+		return (new Buffer(str)).toString();
+	} else {
+		return decodeURIComponent(escape(str));
+	}
 };
 
 DataView.prototype.getSynch = function(num) {
@@ -554,11 +626,21 @@ DataView.prototype.getSynch = function(num) {
 	return out;
 };
 
+DataView.prototype.getUint8Synch = function(offset) {
+	return this.getSynch(this.getUint8(offset));
+};
+
 DataView.prototype.getUint32Synch = function(offset) {
 	return this.getSynch(this.getUint32(offset));
 };
 
-DataView.prototype.getUint24 = function(offset) {
+/*
+ * Not really an int as such, but named for consistency
+ */
+DataView.prototype.getUint24 = function(offset, littleEndian) {
+	if(littleEndian) {
+		return this.getUint8(offset) + (this.getUint8(offset + 1) << 8) + (this.getUint8(offset + 2) << 16);
+	}
 	return this.getUint8(offset + 2) + (this.getUint8(offset + 1) << 8) + (this.getUint8(offset) << 16);
 };
 var Genres = [
@@ -713,71 +795,107 @@ var Genres = [
 	'Rock/Pop'
 ];
 /*
- * Reader to read in the bytes using ArrayBuffers
+ * Reader.js
+ * A unified reader interface for AJAX, local and File API access
+ * 43081j
+ * License: MIT, see LICENSE
  */
 var Reader = function(type) {
-	this.type = type || 'uri';
+	this.type = type || Reader.OPEN_URI;
 	this.size = null;
 	this.file = null;
 };
 
+Reader.OPEN_FILE = 1;
+Reader.OPEN_URI = 2;
+Reader.OPEN_LOCAL = 3;
+
+if(typeof require === 'function') {
+	var fs = require('fs');
+}
+
 Reader.prototype.open = function(file, callback) {
 	this.file = file;
 	var self = this;
-	if(this.type === 'local') {
-		fs.stat(this.file, function(err, stat) {
-			if(err) {
-				return callback(err);
-			}
-			self.size = stat.size;
-			fs.open(self.file, 'r', function(err, fd) {
+	switch(this.type) {
+		case Reader.OPEN_LOCAL:
+			fs.stat(this.file, function(err, stat) {
 				if(err) {
 					return callback(err);
 				}
-				self.fd = fd;
-				callback();
+				self.size = stat.size;
+				fs.open(self.file, 'r', function(err, fd) {
+					if(err) {
+						return callback(err);
+					}
+					self.fd = fd;
+					callback();
+				});
 			});
-		});
-	} else if(this.type === 'file') {
-		this.size = this.file.size;
-		callback();
-	} else {
-		this.ajax(
-			{
-				uri: this.file,
-				type: 'HEAD',
-			},
-			function(err, resp, xhr) {
-				if(err) {
-					return callback(err);
+		break;
+		case Reader.OPEN_FILE:
+			this.size = this.file.size;
+			callback();
+		break;
+		default:
+			this.ajax(
+				{
+					uri: this.file,
+					type: 'HEAD',
+				},
+				function(err, resp, xhr) {
+					if(err) {
+						return callback(err);
+					}
+					self.size = parseInt(xhr.getResponseHeader('Content-Length'));
+					callback();
 				}
-				self.size = parseInt(xhr.getResponseHeader('Content-Length'));
-				callback();
-			}
-		);
+			);
+		break;
 	}
 };
 
 Reader.prototype.close = function() {
-	if(this.type === 'local') {
+	if(this.type === Reader.OPEN_LOCAL) {
 		fs.close(this.fd);
 	}
 };
 
 Reader.prototype.read = function(length, position, callback) {
-	if(this.type === 'local') {
-		this.readPath(length, position, callback);
-	} else if(this.type === 'file') {
+	if(typeof position === 'function') {
+		callback = position;
+		position = 0;
+	}
+	if(this.type === Reader.OPEN_LOCAL) {
+		this.readLocal(length, position, callback);
+	} else if(this.type === Reader.OPEN_FILE) {
 		this.readFile(length, position, callback);
 	} else {
 		this.readUri(length, position, callback);
 	}
 };
 
+Reader.prototype.readBlob = function(length, position, type, callback) {
+	if(typeof position === 'function') {
+		callback = position;
+		position = 0;
+	} else if(typeof type === 'function') {
+		callback = type;
+		type = 'application/octet-stream';
+	}
+	this.read(length, position, function(err, data) {
+		if(err) {
+			callback(err);
+			return;
+		}
+		callback(null, new Blob([data], {type: type}));
+	});
+};
+
 /*
  * Local reader
  */
-Reader.prototype.readPath = function(length, position, callback) {
+Reader.prototype.readLocal = function(length, position, callback) {
 	var buffer = new Buffer(length);
 	fs.read(this.fd, buffer, 0, length, position, function(err, bytesRead, buffer) {
 		if(err) {
@@ -862,6 +980,19 @@ Reader.prototype.readFile = function(length, position, callback) {
 /*
  * Read the file
  */
+
+  if (typeof options.type === 'string') {
+    switch(options.type) {
+      case 'file':
+        options.type = Reader.OPEN_FILE;
+        break;
+      case 'local': 
+        options.type = Reader.OPEN_LOCAL;
+        break;
+      default:
+        options.type = Reader.OPEN_URI
+    }
+  }
 
   var handle = new Reader(options.type);
 

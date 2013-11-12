@@ -1,4 +1,4 @@
-SOURCES = lib/mp4.js lib/dataview.js lib/genres.js lib/reader.js
+SOURCES = lib/mp4.js node_modules/dataview-extra/dist/dataview-extra.js lib/genres.js node_modules/readerjs/lib/reader.js
 PRELUDE = common/prelude.js
 POSTLUDE = common/postlude.js
 
