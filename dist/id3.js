@@ -964,6 +964,7 @@
 			}
 			ID3Tag.parse(handle, function(err, tags) {
 				cb(err, tags);
+				handle.close()
 			});
 		});
 	};
