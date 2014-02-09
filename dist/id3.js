@@ -237,6 +237,7 @@
 		}
 		for(var i = offset; i < (offset + length); i += 2) {
 			var ch = this.getUint16(i, littleEndian);
+			if (ch == 0x0000) break;
 			if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
 				if(useBuffer) {
 					str.push(ch);
@@ -733,7 +734,16 @@
 						break;
 					}
 				}
-				image.description = (variableLength === 0 ? null : dv.getString(variableLength, variableStart));
+				image.description = null;
+				if (variableLength) {
+					if(encoding === 0 || encoding === 3) {
+						image.description = dv.getString(variableStart, variableStart);
+					} else if(encoding === 1) {
+						image.description = dv.getStringUtf16(variableLength, variableStart, true);
+					} else if(encoding === 2) {
+						image.description = dv.getStringUtf16(variableLength, variableStart);
+					}
+				}
 				image.data = buffer.slice(variableStart + 1);
 				result.value = image;
 			}
@@ -760,7 +770,11 @@
 				/*
 				 * TODO: Implement UTF-8, UTF-16 and UTF-16 with BOM properly?
 				 */
-				result.value = dv.getString(-7, 7);
+				if (encoding) {
+					result.value = dv.getStringUtf16(-7,7, true);
+				} else {
+					result.value = dv.getString(-7, 7);
+				}
 				if(header.id === 'TCO' && !!parseInt(result.value)) {
 					result.value = Genres[parseInt(result.value)];
 				}
@@ -771,10 +785,18 @@
 				 * TODO: Implement UTF-8, UTF-16 and UTF-16 with BOM properly?
 				 */
 				var encoding = dv.getUint8(6);
-				result.value = dv.getString(-10, 10);
-				if(result.value.indexOf('\x00') !== -1) {
-					result.value = result.value.substr(result.value.indexOf('\x00') + 1);
+				if (encoding) {
+					result.value = dv.getStringUtf16(-10, 10, true);
+					if(result.value.indexOf('\x00\x00') !== -1) {
+						result.value = result.value.substr(result.value.indexOf('\x00') + 1);
+					}
+				} else {
+					result.value = dv.getString(-10, 10);
+					if(result.value.indexOf('\x00') !== -1) {
+						result.value = result.value.substr(result.value.indexOf('\x00') + 1);
+					}
 				}
+				
 			} else if(header.id === 'PIC') {
 				var encoding = dv.getUint8(6),
 					image = {
@@ -791,7 +813,15 @@
 						break;
 					}
 				}
-				image.description = (variableLength === 0 ? null : dv.getString(variableLength, variableStart));
+				if (variableLength) {
+					if (encoding) {
+						image.description = dv.getStringUtf16(variableLength,variableStart, true);
+					} else {
+						image.description = dv.getString(variableLength, variableStart);
+					}
+				} else {
+					image.description = null;
+				}
 				image.data = buffer.slice(variableStart + 1);
 				result.value = image;
 			}
