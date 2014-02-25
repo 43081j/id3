@@ -693,9 +693,13 @@
 						}
 						i++;
 					} else {
-						if(dv.getUint8(i) === 0x00) {
-							variableStart = i + 1;
-							break;
+						try {
+							if(dv.getUint8(i) === 0x00) {
+								variableStart = i + 1;
+								break;
+							}
+						} catch(e) {
+							break;	
 						}
 					}
 				}
