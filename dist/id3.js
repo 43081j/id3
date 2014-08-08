@@ -227,14 +227,15 @@
 		if(length < 0) {
 			length += this.byteLength;
 		}
-		if(bom) {
-			var bomInt = this.getUint16(offset);
-			if(bomInt === 0xFFFE) {
-				littleEndian = true;
-			}
-			offset += 2;
-			length -= 2;
-		}
+		// The following is not correctly implemented currently.  It has been commented out to prevent crashing.
+		// if(bom) {
+		// 	var bomInt = this.getUint16(offset);
+		// 	if(bomInt === 0xFFFE) {
+		// 		littleEndian = true;
+		// 	}
+		// 	offset += 2;
+		// 	length -= 2;
+		// }
 		for(var i = offset; i < (offset + length); i += 2) {
 			var ch = this.getUint16(i, littleEndian);
 			if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
@@ -685,7 +686,7 @@
 				/*
 				 * Skip the comment description and retrieve only the comment its self
 				 */
-				for(var i = variableStart;; i++) {
+				for(var i = variableStart; i<buffer.byteLength; i++) {
 					if(encoding === 1 || encoding === 2) {
 						if(dv.getUint16(i) === 0x0000) {
 							variableStart = i + 2;
@@ -925,6 +926,11 @@
 							frameBit,
 							isFrame = true;
 						for(var i = 0; i < 3; i++) {
+							if(position + i >= buffer.byteLength){
+								isFrame = false;
+								break;
+							}
+
 							frameBit = dv.getUint8(position + i);
 							if((frameBit < 0x41 || frameBit > 0x5A) && (frameBit < 0x30 || frameBit > 0x39)) {
 								isFrame = false;
