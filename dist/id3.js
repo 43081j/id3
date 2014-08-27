@@ -938,7 +938,7 @@
 						if(tags.v2.version[0] < 3) {
 							slice = buffer.slice(position, position + 6 + dv.getUint24(position + 3));
 						} else {
-							slice = buffer.slice(position, position + 10 + dv.getUint32Synch(position + 4));
+							slice = buffer.slice(position, position + 10 + dv.getUint32(position + 4));
 						}
 						frame = ID3Frame.parse(slice, tags.v2.version[0]);
 						if(frame) {
