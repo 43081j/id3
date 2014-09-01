@@ -237,7 +237,7 @@
 		}
 		for(var i = offset; i < (offset + length); i += 2) {
 			var ch = this.getUint16(i, littleEndian);
-			if((ch >= 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
+			if((ch > 0 && ch <= 0xD7FF) || (ch >= 0xE000 && ch <= 0xFFFF)) {
 				if(useBuffer) {
 					str.push(ch);
 				} else {
@@ -671,9 +671,11 @@
 				} else {
 					return false;
 				}
-				if(header.id === 'TCON' && !!parseInt(result.value)) {
+				if(header.id === 'TCON' && !isNaN(parseInt(result.value))) {
 					result.value = Genres[parseInt(result.value)];
-				}
+				} else if(header.id === 'TCON' && !isNaN(parseInt(result.value.replace(/[()]/g,'')))) {
+					result.value = Genres[parseInt(result.value.replace(/[()]/g,''))];
+				}                
 			} else if(header.type === 'W') {
 				result.value = dv.getString(-10, 10);
 			} else if(header.id === 'COMM') {
