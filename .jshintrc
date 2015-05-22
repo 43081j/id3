@@ -1,0 +1,17 @@
+{
+	"curly": true,
+	"eqeqeq": true,
+	"forin": true,
+	"latedef": true,
+	"undef": true,
+	"unused": "vars",
+	"globals": {
+		"DataView": false,
+		"Buffer": false,
+		"ID3Frame": false,
+		"Genres": false,
+		"escape": false
+	},
+	"browser": true,
+	"node": true
+}
