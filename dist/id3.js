@@ -597,7 +597,9 @@
 			 * Image frame
 			 */
 			'APIC': 'image',
-			'PIC': 'image'
+			'PIC': 'image',
+			
+			'PRIV': 'private'
 		};
 
 		/*
@@ -726,7 +728,7 @@
 				image.mime = dv.getString(variableLength, variableStart);
 				image.type = ID3Frame.imageTypes[dv.getUint8(variableStart + variableLength + 1)] || 'other';
 				variableStart += variableLength + 2;
-				variableLength = 0;
+				var variableLength = 0;
 				for(var i = variableStart;; i++) {
 					if(dv.getUint8(i) === 0x00) {
 						variableLength = i - variableStart;
@@ -737,8 +739,34 @@
 				image.data = buffer.slice(variableStart + 1);
 				result.value = image;
 			}
+			else if(header.id === 'PRIV') {
+				var privFrame = {
+					description: null,
+					data: null
+				};
+
+				var variableStart = 10;
+				var variableLength = 0;
+				
+				for (var i = variableStart;; i++) {
+
+					if (dv.getUint8(i) === 0x00) {
+						variableLength = i - variableStart;
+						break;
+					}
+				}
+
+
+				privFrame.description = (variableLength === 0 ? null : dv.getString(variableLength, variableStart));
+				privFrame.data = buffer.slice(variableLength + variableStart +1);
+				
+//					tags.v2[frame.tag] = frame.value;
+
+				result.value = privFrame;
+			}
 			return (result.tag ? result : false);
 		};
+
 
 		/*
 		 * ID3v2.2 and earlier
@@ -849,10 +877,10 @@
 					processed.v1 = true;
 					return process();
 				}
-				tags.v1.title = dv.getString(30, 3).replace(/(^\s+|\s+$)/, '') || null;
+				tags.v1.title  = dv.getString(30,  3).replace(/(^\s+|\s+$)/, '') || null;
 				tags.v1.artist = dv.getString(30, 33).replace(/(^\s+|\s+$)/, '') || null;
-				tags.v1.album = dv.getString(30, 63).replace(/(^\s+|\s+$)/, '') || null;
-				tags.v1.year = dv.getString(4, 93).replace(/(^\s+|\s+$)/, '') || null;
+				tags.v1.album  = dv.getString(30, 63).replace(/(^\s+|\s+$)/, '') || null;
+				tags.v1.year   = dv.getString(4 , 93).replace(/(^\s+|\s+$)/, '') || null;
 				/*
 				 * If there is a zero byte at [125], the comment is 28 bytes and the remaining 2 are [0, trackno]
 				 */
@@ -937,9 +965,12 @@
 						 */
 						if(tags.v2.version[0] < 3) {
 							slice = buffer.slice(position, position + 6 + dv.getUint24(position + 3));
-						} else {
+						} else if(tags.v2.version[0] === 3) {
+							slice = buffer.slice(position, position + 10 + dv.getUint32(position + 4));
+						} else if(tags.v2.version[0] === 4) {
 							slice = buffer.slice(position, position + 10 + dv.getUint32Synch(position + 4));
 						}
+						
 						frame = ID3Frame.parse(slice, tags.v2.version[0]);
 						if(frame) {
 							tags.v2[frame.tag] = frame.value;
@@ -964,7 +995,7 @@
 			}
 			ID3Tag.parse(handle, function(err, tags) {
 				cb(err, tags);
-				handle.close()
+				handle.close();
 			});
 		});
 	};
