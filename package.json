@@ -4,6 +4,9 @@
   "author": "43081j",
   "description": "A modern ID3 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
   "main": "./dist/id3.js",
+  "scripts": {
+    "build": "rollup lib/index.js --file dist/id3.js --format umd --name id3js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/43081j/id3.git"
@@ -13,5 +16,8 @@
     "mp3",
     "parser"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.66.4"
+  }
 }
