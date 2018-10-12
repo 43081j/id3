@@ -1,5 +1,4 @@
 import gulp from 'gulp';
-// import wrap from 'gulp-wrap-umd';
 import uglify from 'gulp-uglify';
 import rename from 'gulp-rename';
 import del from 'del';
@@ -7,9 +6,13 @@ import concat from 'gulp-concat';
 
 export const clean = () => del(['dist/*']);
 
-export function umd() {
+export function buildFor(type) {
+  let readerFilePath = 'lib/reader.js';
+  if (type === 'browser') {
+    readerFilePath = 'lib/reader.browser.js';
+  }
   return gulp.src([
-    'lib/reader.js',
+    readerFilePath,
     'lib/dataview-extra.js',
     'lib/genres.js',
     'lib/frame.js',
@@ -26,7 +29,9 @@ export function umd() {
 }
 
 gulp.task('clean', clean);
-const build = gulp.series(clean, umd);
-gulp.task('build', build);
+const buildForNode = gulp.series(clean, buildFor);
+const buildForBrowser = gulp.series(clean, ()=> buildFor('browser'));
+gulp.task('build', buildForNode);
+gulp.task('build:browser', buildForBrowser);
 
-export default build;
+export default buildForNode;
