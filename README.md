@@ -104,6 +104,17 @@ On occasion, an MP3 may have an image embedded in the ID3v2 tag. If this is the 
 
 As you can see, the data is provided as an `ArrayBuffer`. To access it, you may use a `DataView` or typed array such as `Uint8Array`.
 
+Browser and Node
+===
+
+You can customize the files in the dist folder for your end use. Node compatibility ships in the dist folder, but for better browser compatibility, do the following:
+
+1. [install yarn](https://yarnpkg.com/lang/en/docs/install/)
+1. in terminal, cd to the root folder of this project, then run `yarn` to install build dependencies
+1. you can run `yarn build` to build the regular node version, or 
+1. run `yarn build:browser` to get the browser-friendly version.
+
+
 License
 ===
 
