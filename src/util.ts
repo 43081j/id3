@@ -105,7 +105,17 @@ export function getStringUtf16(
   }
 
   if (useBuffer) {
-    return Buffer.from(str).toString();
+    const buf = Buffer.alloc(str.length * 2);
+    for (let i = 0; i < str.length; i++) {
+      const chr = str[i];
+
+      if (littleEndian) {
+        buf.writeUInt16LE(chr, i * 2);
+      } else {
+        buf.writeUInt16BE(chr, i * 2);
+      }
+    }
+    return buf.toString();
   }
 
   return decodeURIComponent(
