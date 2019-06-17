@@ -66,6 +66,10 @@ export function getStringUtf16(
     len += view.byteLength;
   }
 
+  if (offset + 1 > view.byteLength) {
+    return '';
+  }
+
   if (bom) {
     const bomInt = view.getUint16(offset);
 
