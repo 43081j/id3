@@ -48,6 +48,9 @@ id3.fromPath('./test.mp3').then((tags) => {
 });
 ```
 
+**Keep in mind, Node must be run with `--experimental-modules`
+for this to be imported and it cannot be used with `require`.**
+
 ### File inputs (HTML5)
 
 You may parse ID3 tags of a file input:
