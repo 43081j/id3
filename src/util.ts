@@ -118,9 +118,9 @@ export function getStringUtf16(
     return buf.toString();
   }
 
-  return decodeURIComponent(
-    escape(str.map((chr) => String.fromCharCode(chr)).join(''))
-  );
+  return String.fromCharCode.apply(null, (new Uint16Array(
+    str
+  ) as unknown) as number[]);
 }
 
 /**
