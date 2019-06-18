@@ -4,6 +4,7 @@ import {getString, getUint24, getUint32Synch, getStringUtf16} from './util.js';
 export interface ID3Frame {
   tag: string | null;
   value: unknown | null;
+  id: string | null;
 }
 
 export interface ImageValue {
@@ -160,6 +161,7 @@ export const imageTypes = [
  */
 export function parseLegacy(buffer: ArrayBuffer): ID3Frame | null {
   const result: ID3Frame = {
+    id: null,
     tag: null,
     value: null
   };
@@ -176,6 +178,7 @@ export function parseLegacy(buffer: ArrayBuffer): ID3Frame | null {
     return null;
   }
 
+  result.id = header.id;
   result.tag = matchedType;
 
   if (header.type === 'T') {
@@ -249,7 +252,7 @@ export function parse(
   minor = minor || 0;
   major = major || 4;
 
-  const result: ID3Frame = {tag: null, value: null};
+  const result: ID3Frame = {id: null, tag: null, value: null};
   const dv = new DataView(buffer);
 
   if (major < 3) {
@@ -277,6 +280,7 @@ export function parse(
   }
 
   result.tag = matchedType;
+  result.id = header.id;
 
   if (header.type === 'T') {
     const encoding = dv.getUint8(10);

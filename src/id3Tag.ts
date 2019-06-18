@@ -1,5 +1,5 @@
 import {Reader} from './reader.js';
-import {parse as parseFrame} from './id3Frame.js';
+import {parse as parseFrame, ID3Frame} from './id3Frame.js';
 import {getString, getUint32Synch, getUint24} from './util.js';
 import genres from './genres.js';
 
@@ -22,6 +22,7 @@ export interface ID3TagV1 extends ID3Tag {
 export interface ID3TagV2 extends ID3Tag {
   kind: 'v2';
   version: [number, number];
+  frames: ID3Frame[];
 }
 
 /**
@@ -44,10 +45,10 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
   ) {
     tag = {
       kind: 'v1',
-      title: getString(v1Header, 30, 3).replace(/(^\s+|\s+$)/, '') || null,
-      album: getString(v1Header, 30, 63).replace(/(^\s+|\s+$)/, '') || null,
-      artist: getString(v1Header, 30, 33).replace(/(^\s+|\s+$)/, '') || null,
-      year: getString(v1Header, 4, 93).replace(/(^\s+|\s+$)/, '') || null,
+      title: getString(v1Header, 30, 3) || null,
+      album: getString(v1Header, 30, 63) || null,
+      artist: getString(v1Header, 30, 33) || null,
+      year: getString(v1Header, 4, 93) || null,
       genre: null,
       comment: null,
       track: null
@@ -102,7 +103,8 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
         album: tag ? tag.album : null,
         artist: tag ? tag.artist : null,
         year: tag ? tag.year : null,
-        version: version
+        version: version,
+        frames: []
       };
 
       /*
@@ -166,6 +168,7 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
         const frame = await parseFrame(slice, version[0], version[1]);
 
         if (frame && frame.tag) {
+          (tag as ID3TagV2).frames.push(frame);
           tag[frame.tag] = frame.value;
         }
 
