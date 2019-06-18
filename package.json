@@ -27,11 +27,16 @@
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "prettier": "^1.18.2",
+    "rimraf": "^2.6.3",
     "typescript": "^3.5.2"
   },
   "scripts": {
+    "clean": "rimraf ./lib",
+    "prebuild": "npm run clean",
     "lint": "eslint \"src/**/*.ts\"",
     "build": "npm run lint && tsc",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint",
     "format": "prettier --write \"src/**/*.ts\""
   }
 }
