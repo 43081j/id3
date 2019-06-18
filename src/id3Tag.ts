@@ -1,5 +1,5 @@
 import {Reader} from './reader.js';
-import {parse as parseFrame, ID3Frame} from './id3Frame.js';
+import {parse as parseFrame, ID3Frame, ImageValue} from './id3Frame.js';
 import {getString, getUint32Synch, getUint24} from './util.js';
 import genres from './genres.js';
 
@@ -23,6 +23,7 @@ export interface ID3TagV2 extends ID3Tag {
   kind: 'v2';
   version: [number, number];
   frames: ID3Frame[];
+  images: ImageValue[];
 }
 
 /**
@@ -59,11 +60,11 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
      * remaining 2 are [0, trackno]
      */
     if (v1Header.getUint8(125) === 0) {
-      tag.comment = getString(v1Header, 28, 97).replace(/(^\s+|\s+$)/, '');
+      tag.comment = getString(v1Header, 28, 97);
       tag.version = 1.1;
       tag.track = v1Header.getUint8(126);
     } else {
-      tag.comment = getString(v1Header, 30, 97).replace(/(^\s+|\s+$)/, '');
+      tag.comment = getString(v1Header, 30, 97);
     }
 
     /*
@@ -104,7 +105,8 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
         artist: tag ? tag.artist : null,
         year: tag ? tag.year : null,
         version: version,
-        frames: []
+        frames: [],
+        images: []
       };
 
       /*
@@ -168,8 +170,15 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
         const frame = await parseFrame(slice, version[0], version[1]);
 
         if (frame && frame.tag) {
-          (tag as ID3TagV2).frames.push(frame);
-          tag[frame.tag] = frame.value;
+          const tagAsV2 = tag as ID3TagV2;
+
+          tagAsV2.frames.push(frame);
+
+          if (frame.tag === 'image') {
+            tagAsV2.images.push(frame.value as ImageValue);
+          } else {
+            tag[frame.tag] = frame.value;
+          }
         }
 
         position += slice.byteLength;
