@@ -22,7 +22,7 @@ You may parse ID3 tags of a remote MP3 by URL:
 
 ```html
 <script type="module">
-import * as id3 from '//unpkg.com/id3js@^2/id3.js';
+import * as id3 from '//unpkg.com/id3js@^2/lib/id3.js';
 
 id3.fromUrl('/audio/track.mp3').then((tags) => {
   // tags now contains v1, v2 and merged tags
@@ -41,7 +41,7 @@ downloaded.
 You may parse ID3 tags of a local file in Node:
 
 ```ts
-import * as id3 from './node_modules/id3js/id3.js';
+import * as id3 from 'id3js';
 
 id3.fromPath('./test.mp3').then((tags) => {
   // tags now contains v1, v2 and merged tags
@@ -59,7 +59,7 @@ You may parse ID3 tags of a file input:
 <input type="file">
 
 <script type="module">
-import * as id3 from '//unpkg.com/id3js@^2/id3.js';
+import * as id3 from '//unpkg.com/id3js@^2/lib/id3.js';
 
 document
   .querySelector('input[type="file"]')
