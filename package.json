@@ -4,6 +4,7 @@
   "author": "43081j",
   "description": "A modern ID3 parser written completely in JavaScript, making use of typed arrays and the HTML5 File API",
   "main": "./lib/id3.js",
+  "types": "./lib/id3.d.ts",
   "type": "module",
   "repository": {
     "type": "git",
