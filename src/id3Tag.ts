@@ -46,10 +46,10 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
   ) {
     tag = {
       kind: 'v1',
-      title: getString(v1Header, 30, 3) || null,
-      album: getString(v1Header, 30, 63) || null,
-      artist: getString(v1Header, 30, 33) || null,
-      year: getString(v1Header, 4, 93) || null,
+      title: getString(v1Header, 30, 3).trim() || null,
+      album: getString(v1Header, 30, 63).trim() || null,
+      artist: getString(v1Header, 30, 33).trim() || null,
+      year: getString(v1Header, 4, 93).trim() || null,
       genre: null,
       comment: null,
       track: null
