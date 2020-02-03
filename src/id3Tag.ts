@@ -14,7 +14,7 @@ export interface ID3Tag {
 export interface ID3TagV1 extends ID3Tag {
   kind: 'v1';
   comment: string | null;
-  track: string | null;
+  track: number | null;
   genre: string | null;
   version: number;
 }
@@ -54,23 +54,25 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
       comment: null,
       track: null
     };
+    
+    const tagAsV1 = tag as ID3TagV1;
 
     /*
      * If there is a zero byte at [125], the comment is 28 bytes and the
      * remaining 2 are [0, trackno]
      */
     if (v1Header.getUint8(125) === 0) {
-      tag.comment = getString(v1Header, 28, 97);
-      tag.version = 1.1;
-      tag.track = v1Header.getUint8(126);
+      tagAsV1.comment = getString(v1Header, 28, 97);
+      tagAsV1.version = 1.1;
+      tagAsV1.track = v1Header.getUint8(126);
     } else {
-      tag.comment = getString(v1Header, 30, 97);
+      tagAsV1.comment = getString(v1Header, 30, 97);
     }
 
     /*
      * Lookup the genre index in the predefined genres array
      */
-    tag.genre = genres[v1Header.getUint8(127)] || null;
+    tagAsV1.genre = genres[v1Header.getUint8(127)] || null;
   }
 
   /*
