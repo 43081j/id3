@@ -54,7 +54,7 @@ export async function parse(handle: Reader): Promise<ID3Tag | null> {
       comment: null,
       track: null
     };
-    
+
     const tagAsV1 = tag as ID3TagV1;
 
     /*
