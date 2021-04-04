@@ -11,7 +11,7 @@ export abstract class Reader {
    * Opens the resource for reading
    * @return {Promise<void>}
    */
-  public abstract async open(): Promise<void>;
+  public abstract open(): Promise<void>;
 
   /**
    * Closes the resource
@@ -27,10 +27,7 @@ export abstract class Reader {
    * @param {number} position Position to begin from
    * @return {Promise<ArrayBuffer>}
    */
-  public abstract async read(
-    length: number,
-    position: number
-  ): Promise<ArrayBuffer>;
+  public abstract read(length: number, position: number): Promise<ArrayBuffer>;
 
   /**
    * Reads a specified range into a Blob
