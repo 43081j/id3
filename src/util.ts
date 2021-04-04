@@ -118,9 +118,10 @@ export function getStringUtf16(
     return buf.toString();
   }
 
-  return String.fromCharCode.apply(null, (new Uint16Array(
-    str
-  ) as unknown) as number[]);
+  return String.fromCharCode.apply(
+    null,
+    (new Uint16Array(str) as unknown) as number[]
+  );
 }
 
 /**
