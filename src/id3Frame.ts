@@ -63,6 +63,7 @@ export const types: ReadonlyMap<string, string> = new Map<string, string>([
   ['TSRC', 'isrc'],
   ['TSSE', 'encoder-settings'],
   ['TSST', 'set-subtitle'],
+  ['TYER', 'year'],
   /*
    * Textual frames (<=2.2)
    */
@@ -95,6 +96,7 @@ export const types: ReadonlyMap<string, string> = new Map<string, string>([
   ['TT2', 'title'],
   ['TT3', 'subtitle'],
   ['TXT', 'writer'],
+  ['TYE', 'year'],
   /*
    * URL frames
    */
