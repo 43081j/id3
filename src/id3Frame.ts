@@ -407,7 +407,7 @@ export function parse(
       }
     }
 
-    image.data = buffer.slice(variableStart + 1);
+    image.data = buffer.slice(variableStart + variableLength + 1);
 
     result.value = image;
   }
