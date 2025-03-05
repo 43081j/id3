@@ -405,6 +405,8 @@ export function parse(
       } else if (encoding === 2) {
         image.description = getStringUtf16(dv, variableLength, variableStart);
       }
+      // advancing the read pointer after reading the picture description
+      variableStart += variableLength;
     }
 
     image.data = buffer.slice(variableStart + 1);
